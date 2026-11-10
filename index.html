@@ -1,0 +1,519 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuietMode - Noise Monitor</title>
+
+<style>
+:root {
+  --bg: #0b1220;
+  --panel: #121d30;
+  --line: #26364f;
+  --muted: #91a1b8;
+  --text: #f4f7fb;
+  --accent: #77e0c0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% -20%, #203653, #0b1220 55%);
+  font-family: Arial, sans-serif;
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  padding: 25px;
+}
+
+.wrap { width: min(920px, 100%); }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.pill {
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 8px 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hero { margin-bottom: 25px; }
+
+.eyebrow {
+  color: var(--accent);
+  letter-spacing: 2px;
+  font-size: 12px;
+}
+
+h1 { font-size: 42px; margin: 12px 0; }
+
+.hero p { color: var(--muted); line-height: 1.6; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.25fr .75fr;
+  gap: 18px;
+}
+
+.card {
+  background: linear-gradient(160deg, #162338, #0f192a);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 25px;
+}
+
+.meter-top {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.reading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 30px 0 10px;
+}
+
+.number {
+  font-size: 85px;
+  font-weight: bold;
+}
+
+.unit { color: var(--muted); }
+
+.status {
+  color: var(--muted);
+  font-size: 14px;
+  min-height: 22px;
+}
+
+.track {
+  height: 12px;
+  background: #25344a;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 25px 0 10px;
+}
+
+.fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #67d8bd, #f4c76b, #ff6b78);
+  transition: width .15s;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+
+button {
+  padding: 13px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:disabled { opacity: .4; cursor: not-allowed; }
+
+.primary {
+  background: var(--accent);
+  color: #092018;
+}
+
+.secondary {
+  background: #263750;
+  color: white;
+}
+
+.setting { margin: 20px 0; }
+
+.setting label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.setting output { color: var(--accent); }
+
+input[type=range] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.phrase {
+  background: #0c1728;
+  border: 1px solid var(--line);
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.phrase small {
+  display: block;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.note {
+  margin-top: 18px;
+  color: #d7c69d;
+  background: #2a2418;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+footer {
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media(max-width:700px) {
+  .grid { grid-template-columns: 1fr; }
+  h1 { font-size: 32px; }
+}
+</style>
+</head>
+
+<body>
+
+<main class="wrap">
+
+<header>
+  <div class="brand">◖ QuietMode</div>
+  <div class="pill">PERSONAL NOISE MONITOR</div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">FOCUS ENVIRONMENT</div>
+  <h1>A little quiet, please.</h1>
+  <p>
+    Monitor the surrounding sound. When the noise exceeds
+    your selected limit, QuietMode automatically plays
+    a voice reminder.
+  </p>
+</section>
+
+<section class="grid">
+
+<div class="card">
+
+  <div class="meter-top">
+    <span>LIVE SOUND LEVEL</span>
+    <span id="liveText">● Microphone off</span>
+  </div>
+
+  <div class="reading">
+    <span class="number" id="reading">—</span>
+    <span class="unit">dB</span>
+  </div>
+
+  <div class="status" id="status">
+    Start monitoring to measure sound.
+  </div>
+
+  <div class="track">
+    <div class="fill" id="fill"></div>
+  </div>
+
+  <div class="scale">
+    <span>Quiet</span>
+    <span id="thresholdLabel">Limit: 40 dB</span>
+    <span>Loud</span>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="start">Start Monitoring</button>
+    <button class="secondary" id="stop" disabled>Stop</button>
+    <button class="secondary" id="test">Test Voice</button>
+  </div>
+
+</div>
+
+<aside class="card">
+
+  <h3>Monitor Settings</h3>
+
+  <div class="setting">
+    <label>
+      Alert Threshold
+      <output id="thresholdOut">40 dB</output>
+    </label>
+
+    <input id="threshold"
+      type="range" min="30" max="90" value="40">
+  </div>
+
+  <div class="setting">
+    <label>
+      Microphone Calibration
+      <output id="calOut">90 dB</output>
+    </label>
+
+    <input id="calibration"
+      type="range" min="60" max="140" value="90">
+  </div>
+
+  <div class="phrase">
+    <small>VOICE ALERT</small>
+    <strong>Please shut your mouth!</strong>
+  </div>
+
+  <div class="note">
+    Microphone readings are estimates, not certified
+    real-world decibel measurements. Calibration is required
+    for accurate dB SPL readings.
+  </div>
+
+</aside>
+
+</section>
+
+<footer>
+  Microphone audio is processed locally in your browser.
+  No audio recording or uploading is performed.
+</footer>
+
+</main>
+
+<script>
+
+const $ = id => document.getElementById(id);
+
+let stream = null;
+let audioContext = null;
+let analyser = null;
+let raf = 0;
+let aboveSince = 0;
+let lastSpoken = 0;
+let armed = true;
+
+let selectedVoice = null;
+
+function loadVoice() {
+  if (!('speechSynthesis' in window)) return;
+
+  const voices = speechSynthesis.getVoices();
+
+  selectedVoice =
+    voices.find(v => /^en[-_]/i.test(v.lang) && /male/i.test(v.name))
+    || voices.find(v => /^en[-_]/i.test(v.lang))
+    || null;
+}
+
+if ('speechSynthesis' in window) {
+  loadVoice();
+  speechSynthesis.onvoiceschanged = loadVoice;
+}
+
+function speak() {
+
+  if (!('speechSynthesis' in window)) return;
+
+  speechSynthesis.cancel();
+
+  const message = new SpeechSynthesisUtterance(
+    "Please shut your mouth!"
+  );
+
+  if (selectedVoice) {
+    message.voice = selectedVoice;
+  }
+
+  // Firm, deeper and slower delivery
+  message.rate = 0.82;
+  message.pitch = 0.75;
+  message.volume = 1;
+
+  speechSynthesis.speak(message);
+}
+
+$('test').addEventListener('click', speak);
+
+$('threshold').addEventListener('input', () => {
+  const value = $('threshold').value;
+  $('thresholdOut').textContent = value + ' dB';
+  $('thresholdLabel').textContent = 'Limit: ' + value + ' dB';
+});
+
+$('calibration').addEventListener('input', () => {
+  $('calOut').textContent = $('calibration').value + ' dB';
+});
+
+async function start() {
+
+  try {
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
+
+    audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )();
+
+    await audioContext.resume();
+
+    const source = audioContext.createMediaStreamSource(stream);
+
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+
+    source.connect(analyser);
+
+    $('liveText').textContent = '● Monitoring';
+    $('start').disabled = true;
+    $('stop').disabled = false;
+
+    const data = new Float32Array(analyser.fftSize);
+
+    function loop() {
+
+      analyser.getFloatTimeDomainData(data);
+
+      let sum = 0;
+
+      for (let i = 0; i < data.length; i++) {
+        sum += data[i] * data[i];
+      }
+
+      const rms = Math.sqrt(sum / data.length);
+
+      const dbfs = 20 * Math.log10(
+        Math.max(rms, 1e-7)
+      );
+
+      const estimate = Math.max(
+        0,
+        Math.round(dbfs + Number($('calibration').value))
+      );
+
+      const limit = Number($('threshold').value);
+
+      $('reading').textContent = estimate;
+
+      $('fill').style.width =
+        Math.min(100, Math.max(0, (estimate - 20) / 80 * 100))
+        + '%';
+
+      if (estimate >= limit) {
+
+        $('status').textContent =
+          'Noise level exceeded your limit!';
+
+        if (!aboveSince) {
+          aboveSince = Date.now();
+        }
+
+        if (
+          armed &&
+          Date.now() - aboveSince > 1200 &&
+          Date.now() - lastSpoken > 6000
+        ) {
+
+          speak();
+
+          lastSpoken = Date.now();
+          armed = false;
+
+          $('status').textContent =
+            'Voice alert played! Waiting for quieter surroundings.';
+        }
+
+      } else {
+
+        aboveSince = 0;
+
+        if (estimate < limit - 3) {
+          armed = true;
+        }
+
+        $('status').textContent =
+          'Sound level is within your limit.';
+      }
+
+      raf = requestAnimationFrame(loop);
+    }
+
+    loop();
+
+  } catch (error) {
+
+    $('status').textContent =
+      'Microphone access failed. Please allow microphone permission and use HTTPS or localhost.';
+
+  }
+}
+
+function stop() {
+
+  cancelAnimationFrame(raf);
+
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+
+  if (audioContext) {
+    audioContext.close();
+  }
+
+  stream = null;
+  audioContext = null;
+  analyser = null;
+
+  aboveSince = 0;
+  armed = true;
+
+  $('liveText').textContent = '● Microphone off';
+  $('start').disabled = false;
+  $('stop').disabled = true;
+
+  $('reading').textContent = '—';
+  $('fill').style.width = '0%';
+
+  $('status').textContent = 'Monitoring stopped.';
+}
+
+$('start').addEventListener('click', start);
+$('stop').addEventListener('click', stop);
+
+window.addEventListener('beforeunload', stop);
+
+</script>
+
+</body>
+</html>
